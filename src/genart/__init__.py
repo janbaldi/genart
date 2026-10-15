@@ -1,2 +1,1 @@
-def hello() -> str:
-    return "Hello from genart!"
+"""Reference-driven generative art collections."""
