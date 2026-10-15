@@ -1,0 +1,12 @@
+{
+  "collection_id": "demo",
+  "params": {},
+  "reference_ids": [
+    "1b334876ba"
+  ],
+  "seed": 11307155,
+  "t": 0.5652,
+  "technique_chain": [
+    "flow_field"
+  ]
+}

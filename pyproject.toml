@@ -1,0 +1,33 @@
+[project]
+name = "genart"
+version = "0.1.0"
+description = "Reference-driven generative art collections"
+requires-python = ">=3.12"
+dependencies = [
+    "imageio>=2.38.1",
+    "numba>=0.68.0",
+    "numpy>=2.5.4",
+    "scikit-image>=0.26.0",
+    "scipy>=1.18.1",
+    "typer>=0.27.3",
+]
+
+[project.scripts]
+genart = "genart.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "NPY"]

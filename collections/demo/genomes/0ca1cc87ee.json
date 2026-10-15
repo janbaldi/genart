@@ -1,0 +1,12 @@
+{
+  "collection_id": "demo",
+  "params": {},
+  "reference_ids": [
+    "1b334876ba"
+  ],
+  "seed": 483628757,
+  "t": 0.3043,
+  "technique_chain": [
+    "superpixel_collage"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "collection_id": "demo",
+  "params": {},
+  "reference_ids": [
+    "1b334876ba"
+  ],
+  "seed": 650757181,
+  "t": 0.913,
+  "technique_chain": [
+    "palette_abstraction"
+  ]
+}
