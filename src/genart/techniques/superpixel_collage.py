@@ -54,22 +54,7 @@ def render(ctx: Context, genome: Genome, size: tuple[int, int]) -> np.ndarray:
     region_col = ((1 - q) * means + q * snap).astype(np.float32)
 
     # Pick regions to move, clustered around a focal point.
-    slices = ndimage.find_objects(labels + 1)
-    centers = np.array(
-        [
-            [(s[0].start + s[0].stop) / 2 / h, (s[1].start + s[1].stop) / 2 / w]
-            if s is not None
-            else [-9.0, -9.0]
-            for s in slices
-        ]
-        + [[-9.0, -9.0]] * (n - len(slices))
-    )
-    focal = rng.uniform(0.3, 0.7, 2)
-    d2 = ((centers - focal) ** 2).sum(1)
-    weight = np.exp(-d2 / (2 * p["focal_sigma"] ** 2))
-    frac = 0.06 + 0.4 * u
-    prob = np.minimum(1.0, frac * n * weight / weight.sum())
-    selected = np.flatnonzero(rng.random(n) < prob)
+    slices, d2, selected = select_fragments(labels, rng, 0.06 + 0.4 * u, p["focal_sigma"])
 
     # Shuffle colors among the moved regions.
     region_col[selected] = region_col[rng.permutation(selected)]
@@ -104,3 +89,45 @@ def _paste(dst: np.ndarray, patch: np.ndarray, mask: np.ndarray, y0: int, x0: in
         return
     m = mask[ya:yb, xa:xb]
     dst[y0 + ya : y0 + yb, x0 + xa : x0 + xb][m] = patch[ya:yb, xa:xb][m]
+
+
+def select_fragments(
+    labels: np.ndarray, rng: np.random.Generator, frac: float, sigma: float
+) -> tuple[list, np.ndarray, np.ndarray]:
+    """Pick about ``frac`` of the regions, clustered around a random focal point.
+
+    Parameters
+    ----------
+    labels : (h, w) int region labels.
+    rng : np.random.Generator
+    frac : float
+        Target fraction of regions to select.
+    sigma : float
+        Spread of the focal cluster, as a fraction of the frame.
+
+    Returns
+    -------
+    slices : list
+        Bounding-box slices per label (``ndimage.find_objects``).
+    d2 : np.ndarray
+        Squared distance of each region center to the focal point.
+    selected : np.ndarray
+        Selected label indices.
+    """
+    h, w = labels.shape
+    n = int(labels.max()) + 1
+    slices = ndimage.find_objects(labels + 1)
+    centers = np.array(
+        [
+            [(s[0].start + s[0].stop) / 2 / h, (s[1].start + s[1].stop) / 2 / w]
+            if s is not None
+            else [-9.0, -9.0]
+            for s in slices
+        ]
+        + [[-9.0, -9.0]] * (n - len(slices))
+    )
+    focal = rng.uniform(0.3, 0.7, 2)
+    d2 = ((centers - focal) ** 2).sum(1)
+    weight = np.exp(-d2 / (2 * sigma**2))
+    prob = np.minimum(1.0, frac * n * weight / weight.sum())
+    return slices, d2, np.flatnonzero(rng.random(n) < prob)

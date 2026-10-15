@@ -11,11 +11,13 @@ from skimage import transform
 THUMB = 360  # thumbnail long side in px
 
 
-def build(collection: Path) -> Path:
-    """Write ``collection/sheet.html`` with every render, sorted by t."""
+def build(collection: Path, technique: str | None = None) -> Path:
+    """Write ``collection/sheet.html`` with every render (or one technique's), sorted by t."""
     items = []
     for side in sorted((collection / "renders").glob("*.json")):
         meta = json.loads(side.read_text())
+        if technique and technique not in meta["genome"]["technique_chain"]:
+            continue
         img = iio.imread(side.with_suffix(".png"))
         s = THUMB / max(img.shape[:2])
         thumb = transform.resize(
@@ -28,7 +30,8 @@ def build(collection: Path) -> Path:
     cards = "\n".join(
         f'<figure data-id="{html.escape(m["id"])}"><img src="data:image/png;base64,{b64}">'
         f"<figcaption><b>{html.escape(m['id'])}</b> t={t:.2f}<br>"
-        f"{html.escape(' → '.join(m['genome']['technique_chain']))}</figcaption></figure>"
+        f"{html.escape(' → '.join(m['genome']['technique_chain']))} {html.escape(_choices(m))}"
+        "</figcaption></figure>"
         for t, m, b64 in items
     )
     page = f"""<!doctype html><meta charset="utf-8">
@@ -52,6 +55,11 @@ document.querySelectorAll('figure').forEach(f => f.onclick = () => {{
 }});
 </script>
 """
-    out = collection / "sheet.html"
+    out = collection / (f"sheet-{technique}.html" if technique else "sheet.html")
     out.write_text(page)
     return out
+
+
+def _choices(meta: dict) -> str:
+    """Categorical genome params, e.g. ``contour · radial``."""
+    return " · ".join(v for v in meta["genome"]["params"].values() if isinstance(v, str))

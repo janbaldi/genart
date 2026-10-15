@@ -21,8 +21,21 @@ Works are sold as editioned prints: reproducibility and provenance are requireme
   `T_RANGE` and `FULL_BLEED`. Spatial params are fractions of the short side, and
   context fields are fetched with `ctx.sample(name, size)`, so output is
   resolution-independent. Register new techniques in `techniques/__init__.py`.
-  - `superpixel_collage` t∈[0, .35), `flow_field` t∈[.35, .7), `palette_abstraction` t∈[.7, 1].
-  - Chains: Milestone 1 renders chains of length one.
+  - `superpixel_collage` t∈[0, .35), `flow_field` t∈[.35, .7), `palette_abstraction` t∈[.7, 1],
+    `line_sweep` t∈[.45, .95]. Where ranges overlap, `sweep` draws one at random.
+  - Optional `init_params(t, rng)` sets categorical genome params (strings) at sweep time;
+    `mutate` jitters only numeric `PARAMS` and passes strings through.
+  - `line_sweep`: thin segments between p1(u), p2(u). Genome picks a `source`
+    (`parametric` circle/spiral/lissajous/harmonograph tuned by luminance-FFT peaks and
+    orientation modes, `contour`, `advected`, `density`) and a `composition` (`radial`,
+    `tiled`, `masked` via `superpixel_collage.select_fragments`). Freq/phase can be
+    overridden with `freq_a`, `freq_b`, `phase1`, `phase2` params. Size-dependent random
+    draws use per-cell child rngs so preview and final stay compositionally identical.
+  - Chains: chains of length one for now.
+- **Line renderer** (`render.py`): `accumulate_lines` adds Xiaolin Wu segments (numba) into
+  float32 density at 3× (preview) / 2× (final) supersampling; `tone_map` gives
+  `1 - exp(-k·d)` with k auto-set so the non-zero 99th percentile → 0.95 ink, times `k_gain`.
+  Line counts scale with the short side, so per-pixel density matches across sizes.
 - **Render** (`src/genart/render.py`): adds the paper margin (6% of the short side),
   converts to sRGB at export. Preview 714×1000 8-bit, final 5906×8268 16-bit
   (50×70 cm @ 300 dpi). Every PNG gets a JSON sidecar (genome, git commit, timestamp, settings).
@@ -35,8 +48,9 @@ Works are sold as editioned prints: reproducibility and provenance are requireme
 uv sync
 uv run genart ingest demo path/to/ref.jpg          # 1–3 refs
 uv run genart sweep demo --n 24                     # previews across t ∈ [0, 1]
+uv run genart sweep demo --n 48 --technique line_sweep --t-min .45 --t-max .95
 uv run genart mutate demo <id> <id> --k 4 [--reseed]
-uv run genart sheet demo                            # collections/demo/sheet.html
+uv run genart sheet demo [--technique line_sweep]    # collections/demo/sheet[-<technique>].html
 uv run genart final demo <id>                       # collections/demo/finals/
 uv run pytest
 uv run ruff check . && uv run ruff format .

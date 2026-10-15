@@ -50,17 +50,27 @@ def sweep(
     t_min: float = 0.0,
     t_max: float = 1.0,
     seed: Annotated[int | None, typer.Option(help="Master seed; random if omitted")] = None,
+    technique: Annotated[str | None, typer.Option(help="Force one technique")] = None,
 ) -> None:
-    """Render N previews evenly spaced over [t_min, t_max] with random seeds."""
+    """Render N previews evenly spaced over [t_min, t_max] with random seeds.
+
+    Where technique t-ranges overlap, one of the candidates is drawn at random.
+    """
     col = _dir(name)
     refs = _ref_ids(col)
     rng = np.random.default_rng(seed)
+    if technique is not None and technique not in REGISTRY:
+        raise typer.BadParameter(f"unknown technique {technique}; one of {list(REGISTRY)}")
     for t in np.linspace(t_min, t_max, n):
         t = round(float(t), 4)
-        g = Genome(name, refs, (for_t(t),), t, {}, int(rng.integers(2**31)))
+        tech = technique or str(rng.choice(for_t(t)))
+        init = getattr(REGISTRY[tech], "init_params", None)
+        params = init(t, rng) if init else {}
+        g = Genome(name, refs, (tech,), t, params, int(rng.integers(2**31)))
         g.save(col / "genomes")
         render_to_file(col, g, col / "renders", PREVIEW, 8)
-        typer.echo(f"{g.id}  t={t:.3f}  {g.technique_chain[0]}")
+        extra = " ".join(str(v) for v in params.values() if isinstance(v, str))
+        typer.echo(f"{g.id}  t={t:.3f}  {tech} {extra}")
 
 
 @app.command()
@@ -85,9 +95,12 @@ def mutate(
 
 
 @app.command(name="sheet")
-def sheet_cmd(name: str) -> None:
+def sheet_cmd(
+    name: str,
+    technique: Annotated[str | None, typer.Option(help="Only this technique")] = None,
+) -> None:
     """Build the HTML contact sheet."""
-    typer.echo(sheet.build(_dir(name)))
+    typer.echo(sheet.build(_dir(name), technique))
 
 
 @app.command()

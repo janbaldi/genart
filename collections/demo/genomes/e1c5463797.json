@@ -1,0 +1,18 @@
+{
+  "collection_id": "demo",
+  "params": {
+    "composition": "radial",
+    "curve": "circle",
+    "mask_mode": "cross",
+    "polar": "off",
+    "source": "contour"
+  },
+  "reference_ids": [
+    "1b334876ba"
+  ],
+  "seed": 867664112,
+  "t": 0.7585,
+  "technique_chain": [
+    "line_sweep"
+  ]
+}

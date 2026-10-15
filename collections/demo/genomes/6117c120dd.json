@@ -1,0 +1,18 @@
+{
+  "collection_id": "demo",
+  "params": {
+    "composition": "tiled",
+    "curve": "harmonograph",
+    "mask_mode": "clip",
+    "polar": "off",
+    "source": "density"
+  },
+  "reference_ids": [
+    "1b334876ba"
+  ],
+  "seed": 1098201709,
+  "t": 0.4819,
+  "technique_chain": [
+    "line_sweep"
+  ]
+}

@@ -30,7 +30,7 @@ class Genome:
     reference_ids: tuple[str, ...]
     technique_chain: tuple[str, ...]
     t: float
-    params: dict[str, float] = field(default_factory=dict)
+    params: dict[str, float | str] = field(default_factory=dict)
     seed: int = 0
 
     @property
@@ -76,7 +76,7 @@ def mutate(
     reseed : bool
         Also draw a new seed.
     """
-    params = {}
+    params = dict(genome.params)  # categorical choices and overrides pass through
     for name, (default, lo, hi) in bounds.items():
         v = genome.params.get(name, default)
         params[name] = float(np.clip(v * (1 + rng.normal(0, 0.1)), lo, hi))
